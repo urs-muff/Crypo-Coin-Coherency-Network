@@ -16,22 +16,25 @@ export class ConceptNetwork {
 
   addConcept(concept: Concept, latentVector: LatentSpaceVector): void {
     if (this.nodes.has(concept.id)) {
-      console.log(`Concept with id ${concept.id} already exists in the network. Skipping addition.`);
-      return;
+      console.log(`Concept with id ${concept.id} already exists in the network. Updating.`);
+      const existingNode = this.nodes.get(concept.id)!;
+      existingNode.concept = concept;
+      existingNode.latentVector = latentVector;
+    } else {
+      this.nodes.set(concept.id, new ConceptNode(concept, latentVector));
     }
-    this.nodes.set(concept.id, new ConceptNode(concept, latentVector));
   }
 
   addRelation(parentId: ConceptID, childId: ConceptID): void {
-    const parent = this.nodes.get(parentId);
-    const child = this.nodes.get(childId);
+    const parentNode = this.nodes.get(parentId);
+    const childNode = this.nodes.get(childId);
 
-    if (!parent || !child) {
+    if (!parentNode || !childNode) {
       throw new Error('Both parent and child concepts must exist in the network');
     }
 
-    parent.children.add(childId);
-    child.parents.add(parentId);
+    parentNode.children.add(childId);
+    childNode.parents.add(parentId);
   }
 
   removeRelation(parentId: ConceptID, childId: ConceptID): void {

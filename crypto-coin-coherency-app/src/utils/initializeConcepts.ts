@@ -2,7 +2,7 @@
 
 import { FlexibleConceptAgent } from '../agents/FlexibleConceptAgent';
 import { ConceptNetwork } from '../network/ConceptNetwork';
-import { Concept, ConceptID, MetaConceptID, MetaConcept, LatentSpaceVector, ConceptType } from '../types/ConceptTypes';
+import { Concept, ConceptID, MetaConceptID, MetaConcept, LatentSpaceVector, ConceptType, GenericConcept } from '../types/ConceptTypes';
 
 const createMetaConcept = (
   id: MetaConceptID,
@@ -167,12 +167,22 @@ export const initializeOneCoinConcept = async (agent: FlexibleConceptAgent, netw
     await createConceptIfNotExists(actionsConcept);
     await createConceptIfNotExists(constraintsConcept);
 
+    const addRelationAndUpdateConcepts = async (parentId: ConceptID, childId: ConceptID, childName: string) => {
+      network.addRelation(parentId, childId);
+      const parentConcept = await agent.getConcept(parentId) as GenericConcept;
+      const updatedParentConcept = {
+        ...parentConcept,
+        children: { ...parentConcept.children, [childName]: childId }
+      };
+      await agent.updateConcept(updatedParentConcept);
+    };
+
     // Establish relationships
-    network.addRelation(oneCoinConcept.id, propertiesConcept.id);
-    network.addRelation(oneCoinConcept.id, relationsConcept.id);
-    network.addRelation(oneCoinConcept.id, featuresConcept.id);
-    network.addRelation(oneCoinConcept.id, actionsConcept.id);
-    network.addRelation(oneCoinConcept.id, constraintsConcept.id);
+    await addRelationAndUpdateConcepts(oneCoinConcept.id, propertiesConcept.id, 'properties');
+    await addRelationAndUpdateConcepts(oneCoinConcept.id, relationsConcept.id, 'relations');
+    await addRelationAndUpdateConcepts(oneCoinConcept.id, featuresConcept.id, 'features');
+    await addRelationAndUpdateConcepts(oneCoinConcept.id, actionsConcept.id, 'actions');
+    await addRelationAndUpdateConcepts(oneCoinConcept.id, constraintsConcept.id, 'constraints');
 
     console.log('One Coin concept initialized successfully');
   } catch (error) {

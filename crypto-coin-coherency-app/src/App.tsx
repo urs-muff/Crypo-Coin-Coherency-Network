@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [agent] = useState(() => globalAgent);
   const [network] = useState(() => globalNetwork);
   const [selectedConceptId, setSelectedConceptId] = useState<ConceptID | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>('');
 
@@ -25,6 +26,7 @@ const App: React.FC = () => {
       if (isInitialized) return;
 
       try {
+        setIsLoading(true);
         setDebugInfo(prev => prev + 'Initializing concepts...\n');
         let concepts = await agent.getAllConcepts();
         setDebugInfo(prev => prev + `Initial concepts count: ${concepts.length}\n`);
@@ -35,6 +37,7 @@ const App: React.FC = () => {
         setDebugInfo(prev => prev + `Concepts after initialization: ${concepts.length}\n`);
 
         setIsInitialized(true);
+        setIsLoading(false);
       } catch (error) {
         setDebugInfo(prev => prev + `Error during initialization: ${error}\n`);
         console.error('Error during initialization:', error);
@@ -43,6 +46,9 @@ const App: React.FC = () => {
 
     initializeConcepts();
   }, [agent, network, isInitialized]);
+
+  if (isLoading) return <div>Loading ...</div>;
+  if (!isInitialized) return <div>Initializing ...</div>;
 
   const handleConceptSelect = (id: ConceptID) => {
     setSelectedConceptId(id);
