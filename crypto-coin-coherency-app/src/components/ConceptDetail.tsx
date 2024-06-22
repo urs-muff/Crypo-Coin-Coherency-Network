@@ -9,9 +9,12 @@ interface ConceptDetailProps {
   agent: FlexibleConceptAgent;
   conceptId: ConceptID;
   onConceptUpdated: () => void;
+  onNavigateToChild: (childId: ConceptID) => void;
 }
 
-export const ConceptDetail: React.FC<ConceptDetailProps> = ({ agent, conceptId, onConceptUpdated }) => {
+export const ConceptDetail: React.FC<ConceptDetailProps> = ({ 
+  agent, conceptId, onConceptUpdated, onNavigateToChild 
+}) => {
   const [concept, setConcept] = useState<Concept | null>(null);
   const [metaConcept, setMetaConcept] = useState<Concept | null>(null);
   const [children, setChildren] = useState<Concept[]>([]);
@@ -41,7 +44,6 @@ export const ConceptDetail: React.FC<ConceptDetailProps> = ({ agent, conceptId, 
     if (concept) {
       const updatedConcept = { ...concept };
       
-      // Only update properties that exist on the current concept
       (Object.keys(updates) as Array<keyof Concept>).forEach(key => {
         if (key in concept) {
           (updatedConcept as any)[key] = updates[key];
@@ -90,33 +92,54 @@ export const ConceptDetail: React.FC<ConceptDetailProps> = ({ agent, conceptId, 
     }
   };
 
+  const groupChildrenByType = (children: Concept[]) => {
+    return children.reduce((groups, child) => {
+      const group = groups[child.type] || [];
+      return { ...groups, [child.type]: [...group, child] };
+    }, {} as Record<string, Concept[]>);
+  };
+
   if (!concept) return <div>Loading...</div>;
 
   const isGenericConcept = (c: Concept): c is GenericConcept => 
     'name' in c && 'description' in c;
+
+  const groupedChildren = groupChildrenByType(children);
 
   return (
     <div>
       <h2>{isGenericConcept(concept) ? concept.name : concept.id}</h2>
       <p>Type: {concept.type}</p>
       <p>Meta-Concept: {metaConcept && isGenericConcept(metaConcept) ? metaConcept.name : 'N/A'}</p>
-      {isGenericConcept(concept) && (
-        <GenericPropertyEditor
-          propertyKey="description"
-          propertyValue={concept.description}
-          onUpdate={(_, value) => handleUpdateConcept({ description: value as string })}
-        />
-      )}
+      
+      <h3>Description</h3>
+      <div style={{ 
+        border: '1px solid #ccc', 
+        padding: '10px', 
+        minHeight: '100px', 
+        marginBottom: '20px' 
+      }}>
+        {isGenericConcept(concept) ? concept.description : 'No description available'}
+      </div>
+
       <h3>Children</h3>
-      <ul>
-        {children.map(child => (
-          <li key={child.id}>
-            {isGenericConcept(child) ? child.name : child.id}
-            <button onClick={() => handleRemoveChild(child.id)}>Remove</button>
-          </li>
-        ))}
-      </ul>
+      {Object.entries(groupedChildren).map(([type, conceptsOfType]) => (
+        <div key={type}>
+          <h4>{type}</h4>
+          <ul>
+            {conceptsOfType.map(child => (
+              <li key={child.id}>
+                <button onClick={() => onNavigateToChild(child.id)}>
+                  {isGenericConcept(child) ? child.name : child.id}
+                </button>
+                <button onClick={() => handleRemoveChild(child.id)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
       <button onClick={handleAddChild}>Add Child</button>
+
       <h3>Properties</h3>
       {typeof concept.value === 'object' && concept.value !== null && !Array.isArray(concept.value) && 
         Object.entries(concept.value).map(([key, value]) => (

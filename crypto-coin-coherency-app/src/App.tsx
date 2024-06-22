@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [agent] = useState(() => globalAgent);
   const [network] = useState(() => globalNetwork);
   const [selectedConceptId, setSelectedConceptId] = useState<ConceptID | null>(null);
+  const [conceptHistory, setConceptHistory] = useState<ConceptID[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>('');
@@ -52,6 +53,22 @@ const App: React.FC = () => {
 
   const handleConceptSelect = (id: ConceptID) => {
     setSelectedConceptId(id);
+    setConceptHistory(prev => [...prev, id]);
+  };
+
+  const handleNavigateToChild = (childId: ConceptID) => {
+    setSelectedConceptId(childId);
+    setConceptHistory(prev => [...prev, childId]);
+  };
+
+  const handleNavigateBack = () => {
+    if (conceptHistory.length > 1) {
+      const newHistory = [...conceptHistory];
+      newHistory.pop(); // Remove current concept
+      const previousConcept = newHistory[newHistory.length - 1];
+      setSelectedConceptId(previousConcept);
+      setConceptHistory(newHistory);
+    }
   };
 
   const handleConceptUpdated = () => {
@@ -70,11 +87,17 @@ const App: React.FC = () => {
         </div>
         <div className="concept-detail-container">
           {selectedConceptId ? (
-            <ConceptDetail
-              agent={agent}
-              conceptId={selectedConceptId}
-              onConceptUpdated={handleConceptUpdated}
-            />
+            <>
+              {conceptHistory.length > 1 && (
+                <button onClick={handleNavigateBack}>Back</button>
+              )}
+              <ConceptDetail
+                agent={agent}
+                conceptId={selectedConceptId}
+                onConceptUpdated={handleConceptUpdated}
+                onNavigateToChild={handleNavigateToChild}
+              />
+            </>
           ) : (
             <p>Select a concept to view details</p>
           )}
