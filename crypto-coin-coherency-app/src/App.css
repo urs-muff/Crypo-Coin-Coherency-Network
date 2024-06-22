@@ -1,0 +1,38 @@
+/* File: src/App.css */
+
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+}
+
+.App-main {
+  display: flex;
+  padding: 20px;
+}
+
+.concept-list-container {
+  flex: 1;
+  max-width: 300px;
+  margin-right: 20px;
+}
+
+.concept-detail-container {
+  flex: 2;
+  text-align: left;
+}
+
+.debug-info {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-top: 20px;
+  text-align: left;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
