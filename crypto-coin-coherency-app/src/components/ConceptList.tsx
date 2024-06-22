@@ -1,12 +1,12 @@
 // File: src/components/ConceptList.tsx
 
 import React, { useState, useEffect } from 'react';
-import { Concept } from '../types/BasicTypes';
-import { ConceptInteractionAgent } from '../types/ConceptTypes';
+import { ConceptID, Concept } from '../types/ConceptTypes';
+import { FlexibleConceptAgent } from '../agents/FlexibleConceptAgent';
 
 interface ConceptListProps {
-  agent: ConceptInteractionAgent;
-  onSelectConcept: (id: string) => void;
+  agent: FlexibleConceptAgent;
+  onSelectConcept: (id: ConceptID) => void;
 }
 
 export const ConceptList: React.FC<ConceptListProps> = ({ agent, onSelectConcept }) => {
@@ -19,11 +19,8 @@ export const ConceptList: React.FC<ConceptListProps> = ({ agent, onSelectConcept
       try {
         setIsLoading(true);
         const allConcepts = await agent.getAllConcepts();
-        // Remove duplicates based on concept ID
-        const uniqueConcepts = allConcepts.filter((concept, index, self) =>
-          index === self.findIndex((t) => t.id === concept.id)
-        );
-        setConcepts(uniqueConcepts);
+        console.log('Fetched concepts:', allConcepts);  // Add this line for debugging
+        setConcepts(allConcepts);
         setError(null);
       } catch (err) {
         setError('Failed to fetch concepts. Please try again later.');
@@ -53,13 +50,10 @@ export const ConceptList: React.FC<ConceptListProps> = ({ agent, onSelectConcept
         <ul>
           {concepts.map((concept) => (
             <li key={concept.id}>
-              <a href="#" onClick={(e) => {
-                e.preventDefault();
-                onSelectConcept(concept.id);
-              }}>
-                <strong>{concept.name}</strong> ({concept.type})
-              </a>
-              <p>{concept.summary}</p>
+              <button onClick={() => onSelectConcept(concept.id)}>
+                <strong>{concept.type}: {('name' in concept) ? concept.name : concept.id}</strong>
+              </button>
+              {('description' in concept) && <p>{concept.description}</p>}
             </li>
           ))}
         </ul>

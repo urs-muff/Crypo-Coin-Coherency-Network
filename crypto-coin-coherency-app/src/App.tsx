@@ -3,16 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { ConceptList } from './components/ConceptList';
 import { ConceptDetail } from './components/ConceptDetail';
-import { ConceptInteractionAgent } from './types/ConceptTypes';
 import { FlexibleConceptAgent } from './agents/FlexibleConceptAgent';
 import { initializeOneCoinConcept } from './utils/initializeConcepts';
+import { ConceptID } from './types/ConceptTypes';
+import { ConceptNetwork } from './network/ConceptNetwork';
+
 import './App.css';
 
 const globalAgent = new FlexibleConceptAgent();
+const globalNetwork = new ConceptNetwork();
 
 const App: React.FC = () => {
-  const [agent] = useState<ConceptInteractionAgent>(() => globalAgent);
-  const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
+  const [agent] = useState(() => globalAgent);
+  const [network] = useState(() => globalNetwork);
+  const [selectedConceptId, setSelectedConceptId] = useState<ConceptID | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>('');
 
@@ -24,17 +28,12 @@ const App: React.FC = () => {
         setDebugInfo(prev => prev + 'Initializing concepts...\n');
         let concepts = await agent.getAllConcepts();
         setDebugInfo(prev => prev + `Initial concepts count: ${concepts.length}\n`);
-        
-        if (concepts.length === 0) {
-          setDebugInfo(prev => prev + 'No concepts found. Initializing One Coin concept...\n');
-          await initializeOneCoinConcept(agent as FlexibleConceptAgent);
-        } else {
-          setDebugInfo(prev => prev + 'Concepts already exist. Skipping initialization.\n');
-        }
-        
+
+        await initializeOneCoinConcept(agent, network);
+
         concepts = await agent.getAllConcepts();
         setDebugInfo(prev => prev + `Concepts after initialization: ${concepts.length}\n`);
-        
+
         setIsInitialized(true);
       } catch (error) {
         setDebugInfo(prev => prev + `Error during initialization: ${error}\n`);
@@ -43,20 +42,15 @@ const App: React.FC = () => {
     };
 
     initializeConcepts();
-  }, [agent, isInitialized]);
+  }, [agent, network, isInitialized]);
 
-  const handleConceptSelect = (id: string) => {
+  const handleConceptSelect = (id: ConceptID) => {
     setSelectedConceptId(id);
   };
 
   const handleConceptUpdated = () => {
     // Trigger a re-render of the ConceptList
-    setSelectedConceptId(prevId => {
-      if (prevId) {
-        return prevId + '_updated';
-      }
-      return prevId;
-    });
+    setIsInitialized(false);
   };
 
   return (
@@ -72,7 +66,7 @@ const App: React.FC = () => {
           {selectedConceptId ? (
             <ConceptDetail
               agent={agent}
-              conceptId={selectedConceptId.split('_')[0]}
+              conceptId={selectedConceptId}
               onConceptUpdated={handleConceptUpdated}
             />
           ) : (
