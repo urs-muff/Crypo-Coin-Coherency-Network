@@ -1,5 +1,5 @@
 import { program } from 'commander';
-import ConceptManager from './concept-manager.js';
+import ConceptManager, { OwnerData } from './concept-manager.js';
 import IPFSStorage from './ipfs-storage.js';
 import StateManager from './state-manager.js';
 import OwnerRegistry from './owner-registry.js';
@@ -30,8 +30,9 @@ program
     try {
       const ownerId = await getPeerId();
       const owner = await conceptManager.createOwner(ownerId, ownerName);
+      console.log('Created owner:', owner);
       await stateManager.saveState({ ownerId: owner.id });
-      const endpoint = `https://your-domain.com/owner/${ownerId}`; // This should be dynamically generated in a real system
+      const endpoint = `https://your-domain.com/owner/${ownerId}`;
       await ownerRegistry.registerOwner(ownerId, ownerName, endpoint);
       console.log(`Owner initialized and registered: ${owner.id}`);
     } catch (error) {
@@ -46,6 +47,14 @@ program
     try {
       const state = await stateManager.loadState();
       const { ownerId } = state;
+
+      // Check if a concept with this name already exists
+      const existingConcept = await conceptManager.findConceptByName(name);
+      if (existingConcept) {
+        console.log(`A concept with the name "${name}" already exists. Its ID is: ${existingConcept.id}`);
+        return;
+      }
+
       const concept = new Concept(name, description, 'default-type-id');
       concept.addOwner(ownerId, 1);  // Linking the concept to the owner
       const createdConcept = await conceptManager.createConcept(concept);
@@ -102,17 +111,58 @@ program
   });
 
 program
+  .command('find-concept <name>')
+  .description('Find concepts by name')
+  .action(async (name) => {
+    try {
+      const items = await conceptManager.listAllConcepts();
+      const matchingConcepts = items.filter(item => 
+        item instanceof Concept && item.name.toLowerCase() === name.toLowerCase()
+      );
+      
+      if (matchingConcepts.length === 0) {
+        console.log(`No concepts found with the name "${name}".`);
+      } else {
+        console.log(`Found ${matchingConcepts.length} concept(s) with the name "${name}":`);
+        matchingConcepts.forEach(concept => {
+          if (concept instanceof Concept) {
+            console.log(`ID: ${concept.id}, Description: ${concept.description}`);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error finding concepts:', error);
+    }
+  });
+
+program
+  .command('remove-concept <id>')
+  .description('Remove a concept by its ID')
+  .action(async (id) => {
+    try {
+      await conceptManager.removeConcept(id);
+      console.log(`Concept with ID ${id} has been removed.`);
+    } catch (error) {
+      console.error('Error removing concept:', error);
+    }
+  });
+
+program
   .command('list-concepts')
-  .description('List all concepts')
+  .description('List all concepts and owners')
   .action(async () => {
     try {
-      const concepts = await conceptManager.listAllConcepts();
-      console.log('All concepts:');
-      concepts.forEach(concept => {
-        console.log(`ID: ${concept.id}, Name: ${concept.name}, Description: ${concept.description}, Owners: ${concept.owners.map(owner => owner.conceptId).join(', ')}`);
+      const items = await conceptManager.listAllConcepts();
+      console.log('All concepts and owners:');
+      items.forEach(item => {
+        if (item instanceof Concept) {
+          console.log(`Concept - ID: ${item.id}, Name: ${item.name}, Description: ${item.description}, Type: ${item.typeId}, Owners: ${item.owners.map(owner => owner.conceptId).join(', ')}`);
+        } else {
+          console.log(`Owner - ID: ${item.id}, Name: ${item.name}`);
+        }
       });
     } catch (error) {
-      console.error('Error listing concepts:', error);
+      console.error('Error listing concepts and owners:', error);
     }
   });
 

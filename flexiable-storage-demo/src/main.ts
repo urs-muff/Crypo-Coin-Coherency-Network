@@ -2,7 +2,7 @@ import IPFSStorage from './ipfs-storage';
 import ConceptManager from './concept-manager';
 import Concept from './concept';
 
-// Instantiate MockIPFSStorage
+// Instantiate IPFSStorage
 const storage = new IPFSStorage();
 
 // Pass the storage instance to ConceptManager
@@ -21,21 +21,34 @@ async function run() {
     console.log('Concept created:', conceptId);
 
     // Retrieve a concept
-    const retrievedConcept = await conceptManager.getConcept(conceptId);
-    console.log('Retrieved concept:', retrievedConcept);
+    const retrievedItem = await conceptManager.getConcept(conceptId);
+    console.log('Retrieved item:', retrievedItem);
 
-    // Update a concept
-    retrievedConcept.description = 'An updated test concept';
-    await conceptManager.updateConcept(conceptId, retrievedConcept);
-    console.log('Concept updated:', retrievedConcept);
+    if (retrievedItem instanceof Concept) {
+      // Update the concept
+      retrievedItem.description = 'An updated test concept';
+      await conceptManager.updateConcept(conceptId, retrievedItem);
+      console.log('Concept updated:', retrievedItem);
+    } else {
+      console.log('Retrieved item is not a Concept, cannot update');
+    }
 
-    // List all concepts
-    const allConcepts = await conceptManager.listAllConcepts();
-    console.log('All concepts:', allConcepts);
+    // List all concepts and owners
+    const allItems = await conceptManager.listAllConcepts();
+    console.log('All items:');
+    allItems.forEach(item => {
+      if (item instanceof Concept) {
+        console.log(`Concept - ID: ${item.id}, Name: ${item.name}, Description: ${item.description}`);
+      } else {
+        console.log(`Owner - ID: ${item.id}, Name: ${item.name}`);
+      }
+    });
 
     // Delete a concept
-    await conceptManager.deleteConcept(conceptId);
-    console.log('Concept deleted:', conceptId);
+    if (retrievedItem instanceof Concept) {
+      await conceptManager.deleteConcept(conceptId);
+      console.log('Concept deleted:', conceptId);
+    }
   } catch (error) {
     console.error('Error:', error);
   }

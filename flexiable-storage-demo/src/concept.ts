@@ -56,24 +56,16 @@ class Concept {
       updatedAt: this.updatedAt.toISOString(),
     });
   }
-
+  
   static fromJSON(json: string): Concept {
     const data = JSON.parse(json);
     const concept = new Concept(data.name, data.description, data.typeId);
-    console.log(`Concept data: ${data.name}, CreatedAt: ${data.createdAt}, UpdatedAt: ${data.updatedAt}`);
     concept.id = data.id;
     concept.owners = data.owners;
     concept.alignedConcepts = data.alignedConcepts;
     concept.properties = data.properties;
     concept.createdAt = new Date(data.createdAt);
     concept.updatedAt = new Date(data.updatedAt);
-
-    // Logging to debug invalid date issues
-    console.log(`Concept loaded: ${concept.name}, CreatedAt: ${concept.createdAt}, UpdatedAt: ${concept.updatedAt}`);
-
-    if (isNaN(concept.createdAt.getTime()) || isNaN(concept.updatedAt.getTime())) {
-      throw new Error(`Invalid date value in concept data: ${json}`);
-    }
 
     return concept;
   }

@@ -35,29 +35,28 @@ class OwnerCommunication {
     let concept = await this.conceptManager.getConcept(query.id);
     let isGuess = false;
     let alignmentFactor = 0;
-
-    if (!concept) {
+  
+    if (!(concept instanceof Concept)) {
       concept = await this.generateGuessConcept(query);
       isGuess = true;
     } else {
       alignmentFactor = this.calculateAlignmentFactor(concept);
     }
-
+  
     const response: ConceptResponse = {
       id: concept.id,
       name: concept.name,
-      description: concept.description,
+      description: concept instanceof Concept ? concept.description : '',
       alignmentFactor,
       isGuess
     };
-
+  
     if (alignmentFactor < 0.8) {
-      response.upgradeDescription = await this.generateUpgradedDescription(concept);
+      response.upgradeDescription = await this.generateUpgradedDescription(concept as Concept);
     }
-
+  
     return response;
   }
-
   private async generateGuessConcept(query: ConceptQuery): Promise<Concept> {
     // This is a placeholder. In a real system, this could use AI or other methods to generate a guess.
     const description = `Generated description for ${query.name}`;
