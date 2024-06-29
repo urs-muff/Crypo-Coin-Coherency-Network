@@ -1,6 +1,6 @@
 import IPFSStorage from './ipfs-storage';
 import ConceptManager from './concept-manager';
-import Concept from './concept';
+import { Concept } from './concept.js';
 
 // Instantiate IPFSStorage
 const storage = new IPFSStorage();
@@ -12,7 +12,8 @@ const conceptManager = new ConceptManager(storage);
 async function run() {
   try {
     // Create an owner
-    const owner = await conceptManager.createOwner('owner1', 'Alice');
+    await conceptManager.initialize();
+    const owner = await conceptManager.createOwner('Alice');
     console.log('Owner created:', owner);
 
     // Create a concept
@@ -37,16 +38,13 @@ async function run() {
     const allItems = await conceptManager.listAllConcepts();
     console.log('All items:');
     allItems.forEach(item => {
-      if (item instanceof Concept) {
-        console.log(`Concept - ID: ${item.id}, Name: ${item.name}, Description: ${item.description}`);
-      } else {
-        console.log(`Owner - ID: ${item.id}, Name: ${item.name}`);
-      }
+      console.log(`Concept - ID: ${item.id}, Name: ${item.name}, Description: ${item.description}`);
     });
+
 
     // Delete a concept
     if (retrievedItem instanceof Concept) {
-      await conceptManager.deleteConcept(conceptId);
+      await conceptManager.removeConcept(conceptId);
       console.log('Concept deleted:', conceptId);
     }
   } catch (error) {

@@ -1,5 +1,5 @@
 // owner-communication.ts
-import Concept from './concept.js';
+import { Concept, Alignment } from './concept.js';
 import ConceptManager from './concept-manager.js';
 
 interface ConceptQuery {
@@ -36,27 +36,28 @@ class OwnerCommunication {
     let isGuess = false;
     let alignmentFactor = 0;
   
-    if (!(concept instanceof Concept)) {
+    if (!concept) {
       concept = await this.generateGuessConcept(query);
       isGuess = true;
     } else {
-      alignmentFactor = this.calculateAlignmentFactor(concept);
+      alignmentFactor = await this.calculateAlignmentFactor(concept);
     }
   
     const response: ConceptResponse = {
       id: concept.id,
       name: concept.name,
-      description: concept instanceof Concept ? concept.description : '',
+      description: concept.description,
       alignmentFactor,
       isGuess
     };
   
     if (alignmentFactor < 0.8) {
-      response.upgradeDescription = await this.generateUpgradedDescription(concept as Concept);
+      response.upgradeDescription = await this.generateUpgradedDescription(concept);
     }
   
     return response;
   }
+  
   private async generateGuessConcept(query: ConceptQuery): Promise<Concept> {
     // This is a placeholder. In a real system, this could use AI or other methods to generate a guess.
     const description = `Generated description for ${query.name}`;
@@ -64,16 +65,21 @@ class OwnerCommunication {
     return new Concept(query.name, description, typeId);
   }
 
-  private calculateAlignmentFactor(concept: Concept): number {
-    const ownerStake = concept.owners.find(owner => owner.conceptId === this.ownerId);
-    if (ownerStake) {
-      return ownerStake.factor;
+  private async calculateAlignmentFactor(concept: Concept): Promise<number> {
+    for (const alignment of concept.alignedConcepts) {
+      const alignedConcept = await this.conceptManager.getConcept(alignment.conceptId);
+      if (alignedConcept && this.conceptManager.isOwner(alignedConcept) && alignment.conceptId === this.ownerId) {
+        return alignment.factor;
+      }
     }
     
-    const alignedConcept = (this.conceptManager.getConcept(this.ownerId) as unknown as Concept)
-      .alignedConcepts.find(aligned => aligned.conceptId === concept.id);
+    const ownerConcept = await this.conceptManager.getConcept(this.ownerId);
+    if (ownerConcept) {
+      const alignment = ownerConcept.alignedConcepts.find(a => a.conceptId === concept.id);
+      return alignment ? alignment.factor : 0;
+    }
     
-    return alignedConcept ? alignedConcept.factor : 0;
+    return 0;
   }
 
   private async generateUpgradedDescription(concept: Concept): Promise<string> {

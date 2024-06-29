@@ -1,18 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
 
-interface Stake {
-  conceptId: string;  // ID of the related concept
-  factor: number;     // Stake or alignment factor (0-1)
+export interface Alignment {
+  conceptId: string;
+  factor: number;
 }
 
-class Concept {
+export class Concept {
   id: string;
   name: string;
   description: string;
   typeId: string;     // ID of the concept representing this concept's type
-  owners: Stake[];
-  alignedConcepts: Stake[];  // New property for aligned concepts
-  properties: { [key: string]: string };  // Additional properties
+  alignedConcepts: Alignment[];
+  properties: { [key: string]: string };
   createdAt: Date;
   updatedAt: Date;
 
@@ -21,15 +20,9 @@ class Concept {
     this.name = name;
     this.description = description;
     this.typeId = typeId;
-    this.owners = [];
-    this.alignedConcepts = [];  // Initialize aligned concepts
+    this.alignedConcepts = [];
     this.properties = {};
     this.createdAt = new Date();
-    this.updatedAt = new Date();
-  }
-
-  addOwner(ownerConceptId: string, factor: number): void {
-    this.owners.push({ conceptId: ownerConceptId, factor });
     this.updatedAt = new Date();
   }
 
@@ -49,7 +42,6 @@ class Concept {
       name: this.name,
       description: this.description,
       typeId: this.typeId,
-      owners: this.owners,
       alignedConcepts: this.alignedConcepts,
       properties: this.properties,
       createdAt: this.createdAt.toISOString(),
@@ -61,7 +53,6 @@ class Concept {
     const data = JSON.parse(json);
     const concept = new Concept(data.name, data.description, data.typeId);
     concept.id = data.id;
-    concept.owners = data.owners;
     concept.alignedConcepts = data.alignedConcepts;
     concept.properties = data.properties;
     concept.createdAt = new Date(data.createdAt);
@@ -93,5 +84,3 @@ class Concept {
     this.updatedAt = new Date();
   }
 }
-
-export default Concept;

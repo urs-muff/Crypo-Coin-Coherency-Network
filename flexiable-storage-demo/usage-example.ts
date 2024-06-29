@@ -1,7 +1,7 @@
 // usage-example.ts
 import IPFSStorage from './src/ipfs-storage';
 import ConceptManager from './src/concept-manager';
-import Concept from './src/concept';
+import { Concept } from './src/concept';
 import initializeSystem from './src/system-initializer';
 import OwnerCommunication from './src/owner-communication';
 

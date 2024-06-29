@@ -1,10 +1,10 @@
 import { program } from 'commander';
-import ConceptManager, { OwnerData } from './concept-manager.js';
+import ConceptManager from './concept-manager.js';
 import IPFSStorage from './ipfs-storage.js';
 import StateManager from './state-manager.js';
 import OwnerRegistry from './owner-registry.js';
 import CommunicationProtocol from './communication-protocol.js';
-import Concept from './concept.js';
+import { Concept } from './concept.js';
 import { create as createIPFSClient } from 'ipfs-http-client';
 
 const storage = new IPFSStorage();
@@ -25,18 +25,75 @@ program
 
 program
   .command('init <ownerName>')
-  .description('Initialize a new owner')
+  .description('Initialize the system with a new owner')
   .action(async (ownerName) => {
     try {
-      const ownerId = await getPeerId();
-      const owner = await conceptManager.createOwner(ownerId, ownerName);
-      console.log('Created owner:', owner);
-      await stateManager.saveState({ ownerId: owner.id });
-      const endpoint = `https://your-domain.com/owner/${ownerId}`;
-      await ownerRegistry.registerOwner(ownerId, ownerName, endpoint);
-      console.log(`Owner initialized and registered: ${owner.id}`);
+      const peerId = await getPeerId();
+      const ownerId = await conceptManager.registerOwner(ownerName, peerId);
+      await stateManager.saveState({ ownerId, peerId });
+      console.log(`System initialized with owner: ${ownerName} (ID: ${ownerId}, Peer ID: ${peerId})`);
     } catch (error) {
-      console.error('Error initializing owner:', error);
+      console.error('Error initializing system:', error);
+    }
+  });
+
+program
+  .command('create-owner <ownerName>')
+  .description('Create a new owner')
+  .action(async (ownerName) => {
+    try {
+      const ownerId = await conceptManager.createOwner(ownerName);
+      console.log(`New owner created with ID: ${ownerId}`);
+    } catch (error) {
+      console.error('Error creating owner:', error);
+    }
+  });
+
+program
+  .command('track-concept <ownerId> <conceptId> <weight>')
+  .description('Add a tracked concept to an owner')
+  .action(async (ownerId, conceptId, weight) => {
+    try {
+      await conceptManager.addTrackedConcept(ownerId, conceptId, parseFloat(weight));
+      console.log(`Concept ${conceptId} added to owner ${ownerId} with weight ${weight}`);
+    } catch (error) {
+      console.error('Error adding tracked concept:', error);
+    }
+  });
+
+program
+  .command('list-aligned-concepts <id>')
+  .description('List all aligned concepts for a concept or tracked concepts for an owner')
+  .action(async (id) => {
+    try {
+      const item = await conceptManager.getConcept(id);
+      if (!item) {
+        console.log(`No item found with ID ${id}`);
+        return;
+      }
+      
+      const isOwner = conceptManager.isOwner(item);
+      console.log(`${isOwner ? 'Tracked' : 'Aligned'} concepts for ${isOwner ? 'owner' : 'concept'} ${item.name} (ID: ${item.id}):`);
+      
+      for (const alignment of item.alignedConcepts) {
+        const concept = await conceptManager.getConcept(alignment.conceptId);
+        if (concept) {
+          console.log(`- ${concept.name} (ID: ${concept.id}), Factor: ${alignment.factor}, Type: ${concept.typeId}`);
+        }
+      }
+
+      if (!isOwner) {
+        console.log("\nOwners of this concept:");
+        const owners = await conceptManager.getOwners(item);
+        for (const owner of owners) {
+          const ownerConcept = await conceptManager.getConcept(owner.conceptId);
+          if (ownerConcept) {
+            console.log(`- ${ownerConcept.name} (ID: ${ownerConcept.id}), Factor: ${owner.factor}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error listing aligned concepts:', error);
     }
   });
 
@@ -45,9 +102,17 @@ program
   .description('Create a new concept')
   .action(async (name, description) => {
     try {
-      const state = await stateManager.loadState();
-      const { ownerId } = state;
+      let state;
+      try {
+        state = await stateManager.loadState();
+      } catch (error) {
+        console.log('State not initialized. Please run the init command first.');
+        console.log('Usage: npm run start -- init <ownerName>');
+        return;
+      }
 
+      const { ownerId, peerId } = state;
+      
       // Check if a concept with this name already exists
       const existingConcept = await conceptManager.findConceptByName(name);
       if (existingConcept) {
@@ -56,9 +121,10 @@ program
       }
 
       const concept = new Concept(name, description, 'default-type-id');
-      concept.addOwner(ownerId, 1);  // Linking the concept to the owner
-      const createdConcept = await conceptManager.createConcept(concept);
-      console.log(`Concept created: ${createdConcept}`);
+      concept.addAlignedConcept(ownerId, 1);  // Linking the concept to the owner
+      concept.setProperty('creatorPeerId', peerId);  // Store the creator's Peer ID
+      const createdConceptId = await conceptManager.createConcept(concept);
+      console.log(`Concept created: ${createdConceptId} (Creator Peer ID: ${peerId})`);
     } catch (error) {
       console.error('Error creating concept:', error);
       if ((error as Error).message.includes('State not initialized')) {
@@ -154,16 +220,22 @@ program
     try {
       const items = await conceptManager.listAllConcepts();
       console.log('All concepts and owners:');
-      items.forEach(item => {
-        if (item instanceof Concept) {
-          console.log(`Concept - ID: ${item.id}, Name: ${item.name}, Description: ${item.description}, Type: ${item.typeId}, Owners: ${item.owners.map(owner => owner.conceptId).join(', ')}`);
-        } else {
+      for (const item of items) {
+        if (conceptManager.isOwner(item)) {
           console.log(`Owner - ID: ${item.id}, Name: ${item.name}`);
+        } else {
+          console.log(`Concept - ID: ${item.id}, Name: ${item.name}, Description: ${item.description}, Type: ${item.typeId}`);
+          const owners = await conceptManager.getOwners(item);
+          for (const owner of owners) {
+            const ownerConcept = await conceptManager.getConcept(owner.conceptId);
+            if (ownerConcept) {
+              console.log(`- ${ownerConcept.name} (ID: ${ownerConcept.id}), Factor: ${owner.factor}`);
+            }
+          }
         }
-      });
+      }
     } catch (error) {
       console.error('Error listing concepts and owners:', error);
     }
   });
-
 program.parse(process.argv);

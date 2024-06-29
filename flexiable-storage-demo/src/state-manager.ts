@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 
 interface State {
   ownerId: string;
+  peerId: string;
   // Add other state properties as needed
 }
 

@@ -1,20 +1,33 @@
 import { StorageProvider } from './storage-interface.js';
-import Concept from './concept.js';
-
-export type OwnerData = { id: string; name: string };
-type ConceptOrOwner = Concept | OwnerData;
+import { Concept, Alignment } from './concept.js';
 
 class ConceptManager {
   private storage: StorageProvider;
+  private ownerTypeId: string;
 
   constructor(storage: StorageProvider) {
     this.storage = storage;
+    this.ownerTypeId = ''; // This should be initialized with the actual owner type ID
   }
 
-  async createOwner(ownerId: string, ownerName: string): Promise<OwnerData> {
-    const ownerData: OwnerData = { id: ownerId, name: ownerName };
-    await this.storage.store(ownerId, JSON.stringify(ownerData));
-    return ownerData;
+  async initialize() {
+    // This method should be called once when setting up the system
+    const ownerType = await this.createConcept(new Concept('Owner', 'Represents an owner of concepts', 'type-type-id'));
+    this.ownerTypeId = ownerType;
+  }
+
+  async createOwner(ownerName: string): Promise<string> {
+    const owner = new Concept(ownerName, "An owner of concepts", this.ownerTypeId);
+    await this.storage.store(owner.id, owner.toJSON());
+    return owner.id;
+  }
+
+  async registerOwner(ownerName: string, peerId: string): Promise<string> {
+    const owner = new Concept(ownerName, "An owner of concepts", this.ownerTypeId);
+    owner.id = peerId; // Use the Peer ID as the owner's ID
+    owner.setProperty('peerId', peerId); // Store the Peer ID as a property
+    await this.storage.store(owner.id, owner.toJSON());
+    return owner.id;
   }
 
   async createConcept(concept: Concept): Promise<string> {
@@ -22,45 +35,60 @@ class ConceptManager {
     return concept.id;
   }
 
-  async getConcept(id: string): Promise<ConceptOrOwner> {
-    const data = await this.storage.retrieve(id);
-    const parsedData = JSON.parse(data);
-    if ('typeId' in parsedData) {
+  async getConcept(id: string): Promise<Concept | null> {
+    try {
+      const data = await this.storage.retrieve(id);
       return Concept.fromJSON(data);
-    } else {
-      return parsedData as OwnerData;
+    } catch (error) {
+      console.error('Error retrieving concept:', error);
+      return null;
     }
-  }
-
-  async findConceptByName(name: string): Promise<Concept | null> {
-    const allConcepts = await this.listAllConcepts();
-    const foundConcept = allConcepts.find(item => 
-      item instanceof Concept && item.name === name
-    );
-    return foundConcept instanceof Concept ? foundConcept : null;
-  }
-
-  async removeConcept(id: string): Promise<void> {
-    const item = await this.getConcept(id);
-    if (!(item instanceof Concept)) {
-      throw new Error(`Item with ID ${id} is not a concept and cannot be removed.`);
-    }
-    await this.storage.delete(id);
-    console.log(`Concept with ID ${id} has been removed.`);
   }
 
   async updateConcept(id: string, concept: Concept): Promise<void> {
     await this.storage.update(id, concept.toJSON());
   }
 
-  async deleteConcept(id: string): Promise<void> {
-    await this.storage.delete(id);
+  isOwner(concept: Concept): boolean {
+    return concept.typeId === this.ownerTypeId;
   }
 
-  async listAllConcepts(): Promise<(Concept | OwnerData)[]> {
+  async getOwners(concept: Concept): Promise<Alignment[]> {
+    const ownerAlignments = [];
+    for (const alignment of concept.alignedConcepts) {
+      const alignedConcept = await this.getConcept(alignment.conceptId);
+      if (alignedConcept && this.isOwner(alignedConcept)) {
+        ownerAlignments.push(alignment);
+      }
+    }
+    return ownerAlignments;
+  }
+  
+  async addTrackedConcept(ownerId: string, conceptId: string, weight: number): Promise<void> {
+    const owner = await this.getConcept(ownerId);
+    if (!owner) throw new Error('Owner not found');
+    owner.addAlignedConcept(conceptId, weight);
+    await this.updateConcept(ownerId, owner);
+  }
+
+  async findConceptByName(name: string): Promise<Concept | null> {
+    const allConcepts = await this.listAllConcepts();
+    return allConcepts.find(concept => concept.name === name) || null;
+  }
+
+  async removeConcept(id: string): Promise<void> {
+    const item = await this.getConcept(id);
+    if (!item) {
+      throw new Error(`Item with ID ${id} is not a concept and cannot be removed.`);
+    }
+    await this.storage.delete(id);
+    console.log(`Concept with ID ${id} has been removed.`);
+  }
+
+  async listAllConcepts(): Promise<Concept[]> {
     const allIds = await this.storage.listAll();
     const items = await Promise.all(allIds.map(id => this.getConcept(id)));
-    return items;
+    return items.filter((item): item is Concept => item !== null);
   }
 }
 
