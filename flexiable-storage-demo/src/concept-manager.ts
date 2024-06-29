@@ -12,6 +12,14 @@ class ConceptManager {
     this.git = simpleGit();
   }
 
+  async createOwner(ownerId: string, ownerName: string): Promise<Concept> {
+    const ownerConcept = new Concept(ownerName, `Owner: ${ownerName}`, 'owner-type-id');
+    ownerConcept.id = ownerId;
+    await this.storage.store(ownerConcept.id, ownerConcept.toJSON());
+    await this.commitChange(ownerConcept.id, `Created owner: ${ownerName}`);
+    return ownerConcept;
+  }
+
   async createConcept(concept: Concept): Promise<string> {
     await this.storage.store(concept.id, concept.toJSON());
     await this.commitChange(concept.id, `Created concept: ${concept.name}`);
