@@ -3,6 +3,7 @@ import MockIPFSStorage from './ipfs-storage';
 import ConceptManager from './concept-manager';
 import Concept from './concept';
 import initializeSystem from './system-initializer';
+import OwnerCommunication from './owner-communication';
 
 async function main() {
   const mockStorage = new MockIPFSStorage();
@@ -40,27 +41,21 @@ async function main() {
   await conceptManager.updateConcept(owner1Id, owner1);
   await conceptManager.updateConcept(owner2Id, owner2);
 
-  console.log(`Created concepts with IDs: ${id1}, ${id2}`);
+  // Simulate communication between owners
+  const aliceCommunication = new OwnerCommunication(conceptManager, owner1Id);
+  const bobCommunication = new OwnerCommunication(conceptManager, owner2Id);
 
-  // List all concepts
-  let allConcepts = await conceptManager.listAllConcepts();
-  console.log("All concepts:", JSON.stringify(allConcepts, null, 2));
+  const aliceQueries = [
+    { id: id1, name: "Unity Consciousness" },
+    { id: id2, name: "Flow State Collaboration" },
+    { id: "non-existent-id", name: "Quantum Entanglement" }
+  ];
 
-  // Update a concept
-  const retrievedConcept = await conceptManager.getConcept(id1);
-  retrievedConcept.update(undefined, retrievedConcept.description + " in the universe.");
-  await conceptManager.updateConcept(id1, retrievedConcept);
+  const bobResponses = await bobCommunication.queryConceptsFromOtherOwner(aliceQueries);
 
-  // Compare concepts
-  const comparisonResult = concept1.compare(concept2);
-  console.log("Comparison result:", comparisonResult);
+  console.log("Bob's responses to Alice's queries:", JSON.stringify(bobResponses, null, 2));
 
-  // Delete a concept
-  await conceptManager.deleteConcept(id2);
-
-  // List all concepts again
-  allConcepts = await conceptManager.listAllConcepts();
-  console.log("Remaining concepts after update and deletion:", JSON.stringify(allConcepts, null, 2));
+  // Alice can now process Bob's responses and update her own concepts if needed
 }
 
 main().catch(console.error);
