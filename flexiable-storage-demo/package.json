@@ -3,14 +3,19 @@
   "version": "1.0.0",
   "description": "A flexible concept management system",
   "main": "dist/cli.js",
+  "type": "module",
   "scripts": {
     "build": "tsc && cpy 'functions/*.js' dist/functions",
     "start": "node dist/cli.js",
     "dev": "ts-node src/cli.ts"
   },
   "dependencies": {
+    "@netlify/functions": "^2.8.0",
+    "axion": "^0.1.0",
+    "axios": "^1.7.2",
     "commander": "^8.3.0",
-    "uuid": "^9.0.0"
+    "simple-git": "^3.25.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",

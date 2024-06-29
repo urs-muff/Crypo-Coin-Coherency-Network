@@ -1,12 +1,12 @@
 // usage-example.ts
-import MockIPFSStorage from './src/ipfs-storage';
+import IPFSStorage from './src/ipfs-storage';
 import ConceptManager from './src/concept-manager';
 import Concept from './src/concept';
 import initializeSystem from './src/system-initializer';
 import OwnerCommunication from './src/owner-communication';
 
 async function main() {
-  const mockStorage = new MockIPFSStorage();
+  const mockStorage = new IPFSStorage();
   const conceptManager = new ConceptManager(mockStorage);
 
   // Initialize the system

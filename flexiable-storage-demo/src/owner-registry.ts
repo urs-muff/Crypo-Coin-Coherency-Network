@@ -1,5 +1,4 @@
-// src/owner-registry.ts
-import axios from 'axios';
+import IPFSStorage from './ipfs-storage.js';
 
 interface OwnerInfo {
   id: string;
@@ -9,28 +8,41 @@ interface OwnerInfo {
 
 class OwnerRegistry {
   private registryUrl: string;
+  private storage: IPFSStorage;
 
   constructor(registryUrl: string) {
     this.registryUrl = registryUrl;
+    this.storage = new IPFSStorage();
   }
 
   async registerOwner(ownerId: string, ownerName: string, endpoint: string): Promise<void> {
-    await axios.post(`${this.registryUrl}/.netlify/functions/register-owner`, { id: ownerId, name: ownerName, endpoint });
+    const ownerInfo: OwnerInfo = { id: ownerId, name: ownerName, endpoint };
+    const data = JSON.stringify(ownerInfo);
+    await this.storage.store(ownerId, data);
   }
 
   async getOwnerEndpoint(ownerId: string): Promise<string> {
-    const response = await axios.get(`${this.registryUrl}/.netlify/functions/get-owner?id=${ownerId}`);
-    return response.data.endpoint;
+    const data = await this.storage.retrieve(ownerId);
+    const owner = JSON.parse(data);
+    return owner.endpoint;
   }
 
   async listAllOwners(): Promise<OwnerInfo[]> {
-    const response = await axios.get(`${this.registryUrl}/.netlify/functions/list-owners`);
-    return response.data;
+    const allIds = await this.storage.listAll();
+    const owners = await Promise.all(allIds.map(id => this.getOwnerInfo(id)));
+    return owners;
   }
 
   async findOwnerByName(name: string): Promise<OwnerInfo | null> {
-    const response = await axios.get(`${this.registryUrl}/.netlify/functions/find-owner?name=${encodeURIComponent(name)}`);
-    return response.data || null;
+    const allOwners = await this.listAllOwners();
+    return allOwners.find(owner => owner.name === name) || null;
+  }
+
+  private async getOwnerInfo(id: string): Promise<OwnerInfo> {
+    const data = await this.storage.retrieve(id);
+    const jsonString = Buffer.from(data, 'utf8').toString(); // Ensure correct conversion to string
+    console.log(`Data retrieved for ID ${id}: ${jsonString}`);
+    return JSON.parse(jsonString);
   }
 }
 

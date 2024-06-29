@@ -1,4 +1,3 @@
-// concept.ts
 import { v4 as uuidv4 } from 'uuid';
 
 interface Stake {
@@ -31,10 +30,12 @@ class Concept {
 
   addOwner(ownerConceptId: string, factor: number): void {
     this.owners.push({ conceptId: ownerConceptId, factor });
+    this.updatedAt = new Date();
   }
 
   addAlignedConcept(conceptId: string, factor: number): void {
     this.alignedConcepts.push({ conceptId, factor });
+    this.updatedAt = new Date();
   }
 
   setProperty(key: string, value: string): void {
@@ -59,12 +60,21 @@ class Concept {
   static fromJSON(json: string): Concept {
     const data = JSON.parse(json);
     const concept = new Concept(data.name, data.description, data.typeId);
+    console.log(`Concept data: ${data.name}, CreatedAt: ${data.createdAt}, UpdatedAt: ${data.updatedAt}`);
     concept.id = data.id;
     concept.owners = data.owners;
     concept.alignedConcepts = data.alignedConcepts;
     concept.properties = data.properties;
     concept.createdAt = new Date(data.createdAt);
     concept.updatedAt = new Date(data.updatedAt);
+
+    // Logging to debug invalid date issues
+    console.log(`Concept loaded: ${concept.name}, CreatedAt: ${concept.createdAt}, UpdatedAt: ${concept.updatedAt}`);
+
+    if (isNaN(concept.createdAt.getTime()) || isNaN(concept.updatedAt.getTime())) {
+      throw new Error(`Invalid date value in concept data: ${json}`);
+    }
+
     return concept;
   }
 

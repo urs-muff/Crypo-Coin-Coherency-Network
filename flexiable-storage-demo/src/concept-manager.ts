@@ -1,7 +1,8 @@
-// concept-manager.ts
+// src/concept-manager.ts
 import simpleGit, { SimpleGit } from 'simple-git';
-import { StorageProvider } from './storage-interface';
-import Concept from './concept';
+import { StorageProvider } from './storage-interface.js';
+import Concept from './concept.js';
+import IPFSStorage from './ipfs-storage';
 
 class ConceptManager {
   private storage: StorageProvider;

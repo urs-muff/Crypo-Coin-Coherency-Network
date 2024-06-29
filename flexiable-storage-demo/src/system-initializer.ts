@@ -1,6 +1,6 @@
 // system-initializer.ts
-import Concept from './concept';
-import ConceptManager from './concept-manager';
+import Concept from './concept.js';
+import ConceptManager from './concept-manager.js';
 
 async function initializeSystem(conceptManager: ConceptManager): Promise<{ typeConceptId: string, ownerTypeId: string }> {
   // Create the 'type' concept (meta-type)

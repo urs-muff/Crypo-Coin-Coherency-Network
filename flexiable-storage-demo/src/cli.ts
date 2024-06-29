@@ -1,26 +1,34 @@
 import { program } from 'commander';
-import ConceptManager from './concept-manager';
-import MockIPFSStorage from './ipfs-storage';
-import StateManager from './state-manager';
-import OwnerRegistry from './owner-registry';
-import CommunicationProtocol from './communication-protocol';
-import Concept from './concept';
+import ConceptManager from './concept-manager.js';
+import IPFSStorage from './ipfs-storage.js';
+import StateManager from './state-manager.js';
+import OwnerRegistry from './owner-registry.js';
+import CommunicationProtocol from './communication-protocol.js';
+import Concept from './concept.js';
+import { create as createIPFSClient } from 'ipfs-http-client';
 
-const storage = new MockIPFSStorage();
+const storage = new IPFSStorage();
 const conceptManager = new ConceptManager(storage);
-const stateManager = new StateManager('local-state.json');
+const stateManager = new StateManager('state-key');
 const ownerRegistry = new OwnerRegistry('https://coherency-coin-network-project.netlify.app');
 const communicationProtocol = new CommunicationProtocol(ownerRegistry);
+const ipfs = createIPFSClient({ host: 'localhost', port: 5001, protocol: 'http' });
+
+async function getPeerId() {
+  const id = await ipfs.id();
+  return id.id.toString(); // Ensure Peer ID is a string
+}
 
 program
   .version('1.0.0')
   .description('Crypto Coin Coherency Network CLI');
 
 program
-  .command('init <ownerId> <ownerName>')
+  .command('init <ownerName>')
   .description('Initialize a new owner')
-  .action(async (ownerId, ownerName) => {
+  .action(async (ownerName) => {
     try {
+      const ownerId = await getPeerId();
       const owner = await conceptManager.createOwner(ownerId, ownerName);
       await stateManager.saveState({ ownerId: owner.id });
       const endpoint = `https://your-domain.com/owner/${ownerId}`; // This should be dynamically generated in a real system
@@ -36,14 +44,16 @@ program
   .description('Create a new concept')
   .action(async (name, description) => {
     try {
-      const { ownerId } = await stateManager.loadState();
+      const state = await stateManager.loadState();
+      const { ownerId } = state;
       const concept = new Concept(name, description, 'default-type-id');
+      concept.addOwner(ownerId, 1);  // Linking the concept to the owner
       const createdConcept = await conceptManager.createConcept(concept);
       console.log(`Concept created: ${createdConcept}`);
     } catch (error) {
       console.error('Error creating concept:', error);
       if ((error as Error).message.includes('State not initialized')) {
-        console.log('Please run the init command first: npm run start -- init <ownerId> <ownerName>');
+        console.log('Please run the init command first: npm run start -- init <ownerName>');
       }
     }
   });
@@ -88,6 +98,21 @@ program
       console.log('Response:', response);
     } catch (error) {
       console.error('Error querying concept:', error);
+    }
+  });
+
+program
+  .command('list-concepts')
+  .description('List all concepts')
+  .action(async () => {
+    try {
+      const concepts = await conceptManager.listAllConcepts();
+      console.log('All concepts:');
+      concepts.forEach(concept => {
+        console.log(`ID: ${concept.id}, Name: ${concept.name}, Description: ${concept.description}, Owners: ${concept.owners.map(owner => owner.conceptId).join(', ')}`);
+      });
+    } catch (error) {
+      console.error('Error listing concepts:', error);
     }
   });
 

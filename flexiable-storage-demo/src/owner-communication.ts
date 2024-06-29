@@ -1,6 +1,6 @@
 // owner-communication.ts
-import Concept from './concept';
-import ConceptManager from './concept-manager';
+import Concept from './concept.js';
+import ConceptManager from './concept-manager.js';
 
 interface ConceptQuery {
   id: string;
