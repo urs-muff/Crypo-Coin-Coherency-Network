@@ -1,4 +1,3 @@
-// src/cli.ts
 import { program } from 'commander';
 import ConceptManager from './concept-manager';
 import MockIPFSStorage from './ipfs-storage';
@@ -10,7 +9,7 @@ import Concept from './concept';
 const storage = new MockIPFSStorage();
 const conceptManager = new ConceptManager(storage);
 const stateManager = new StateManager('local-state.json');
-const ownerRegistry = new OwnerRegistry('https://your-domain.com/registry');
+const ownerRegistry = new OwnerRegistry('https://coherency-coin-network-project.netlify.app');
 const communicationProtocol = new CommunicationProtocol(ownerRegistry);
 
 program
@@ -24,7 +23,9 @@ program
     try {
       const owner = await conceptManager.createOwner(ownerId, ownerName);
       await stateManager.saveState({ ownerId: owner.id });
-      console.log(`Owner initialized: ${owner.id}`);
+      const endpoint = `https://your-domain.com/owner/${ownerId}`; // This should be dynamically generated in a real system
+      await ownerRegistry.registerOwner(ownerId, ownerName, endpoint);
+      console.log(`Owner initialized and registered: ${owner.id}`);
     } catch (error) {
       console.error('Error initializing owner:', error);
     }
@@ -44,6 +45,37 @@ program
       if ((error as Error).message.includes('State not initialized')) {
         console.log('Please run the init command first: npm run start -- init <ownerId> <ownerName>');
       }
+    }
+  });
+
+program
+  .command('list-owners')
+  .description('List all registered owners')
+  .action(async () => {
+    try {
+      const owners = await ownerRegistry.listAllOwners();
+      console.log('Registered owners:');
+      owners.forEach(owner => {
+        console.log(`ID: ${owner.id}, Name: ${owner.name}, Endpoint: ${owner.endpoint}`);
+      });
+    } catch (error) {
+      console.error('Error listing owners:', error);
+    }
+  });
+
+program
+  .command('find-owner <name>')
+  .description('Find an owner by name')
+  .action(async (name) => {
+    try {
+      const owner = await ownerRegistry.findOwnerByName(name);
+      if (owner) {
+        console.log(`Owner found: ID: ${owner.id}, Name: ${owner.name}, Endpoint: ${owner.endpoint}`);
+      } else {
+        console.log(`No owner found with name: ${name}`);
+      }
+    } catch (error) {
+      console.error('Error finding owner:', error);
     }
   });
 
