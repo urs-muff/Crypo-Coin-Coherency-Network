@@ -1,9 +1,9 @@
 // concept.ts
 import { v4 as uuidv4 } from 'uuid';
 
-interface OwnershipStake {
-  conceptId: string;  // ID of the owner concept
-  factor: number;     // Ownership stake (0-1)
+interface Stake {
+  conceptId: string;  // ID of the related concept
+  factor: number;     // Stake or alignment factor (0-1)
 }
 
 class Concept {
@@ -11,7 +11,8 @@ class Concept {
   name: string;
   description: string;
   typeId: string;     // ID of the concept representing this concept's type
-  owners: OwnershipStake[];
+  owners: Stake[];
+  alignedConcepts: Stake[];  // New property for aligned concepts
   properties: { [key: string]: string };  // Additional properties
   createdAt: Date;
   updatedAt: Date;
@@ -22,6 +23,7 @@ class Concept {
     this.description = description;
     this.typeId = typeId;
     this.owners = [];
+    this.alignedConcepts = [];  // Initialize aligned concepts
     this.properties = {};
     this.createdAt = new Date();
     this.updatedAt = new Date();
@@ -29,6 +31,10 @@ class Concept {
 
   addOwner(ownerConceptId: string, factor: number): void {
     this.owners.push({ conceptId: ownerConceptId, factor });
+  }
+
+  addAlignedConcept(conceptId: string, factor: number): void {
+    this.alignedConcepts.push({ conceptId, factor });
   }
 
   setProperty(key: string, value: string): void {
@@ -43,6 +49,7 @@ class Concept {
       description: this.description,
       typeId: this.typeId,
       owners: this.owners,
+      alignedConcepts: this.alignedConcepts,
       properties: this.properties,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
@@ -54,6 +61,7 @@ class Concept {
     const concept = new Concept(data.name, data.description, data.typeId);
     concept.id = data.id;
     concept.owners = data.owners;
+    concept.alignedConcepts = data.alignedConcepts;
     concept.properties = data.properties;
     concept.createdAt = new Date(data.createdAt);
     concept.updatedAt = new Date(data.updatedAt);
