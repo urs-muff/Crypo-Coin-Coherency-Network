@@ -57,7 +57,7 @@ class OwnerCommunication {
   
     return response;
   }
-  
+
   private async generateGuessConcept(query: ConceptQuery): Promise<Concept> {
     // This is a placeholder. In a real system, this could use AI or other methods to generate a guess.
     const description = `Generated description for ${query.name}`;
@@ -68,7 +68,7 @@ class OwnerCommunication {
   private async calculateAlignmentFactor(concept: Concept): Promise<number> {
     for (const alignment of concept.alignedConcepts) {
       const alignedConcept = await this.conceptManager.getConcept(alignment.conceptId);
-      if (alignedConcept && this.conceptManager.isOwner(alignedConcept) && alignment.conceptId === this.ownerId) {
+      if (alignedConcept && await this.conceptManager.isOwner(alignedConcept) && alignment.conceptId === this.ownerId) {
         return alignment.factor;
       }
     }

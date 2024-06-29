@@ -72,7 +72,7 @@ program
         return;
       }
       
-      const isOwner = conceptManager.isOwner(item);
+      const isOwner = await conceptManager.isOwner(item);
       console.log(`${isOwner ? 'Tracked' : 'Aligned'} concepts for ${isOwner ? 'owner' : 'concept'} ${item.name} (ID: ${item.id}):`);
       
       for (const alignment of item.alignedConcepts) {
@@ -112,7 +112,7 @@ program
       }
 
       const { ownerId, peerId } = state;
-      
+
       // Check if a concept with this name already exists
       const existingConcept = await conceptManager.findConceptByName(name);
       if (existingConcept) {
@@ -221,7 +221,7 @@ program
       const items = await conceptManager.listAllConcepts();
       console.log('All concepts and owners:');
       for (const item of items) {
-        if (conceptManager.isOwner(item)) {
+        if (await conceptManager.isOwner(item)) {
           console.log(`Owner - ID: ${item.id}, Name: ${item.name}`);
         } else {
           console.log(`Concept - ID: ${item.id}, Name: ${item.name}, Description: ${item.description}, Type: ${item.typeId}`);

@@ -11,21 +11,30 @@ class ConceptManager {
   }
 
   async initialize() {
-    // This method should be called once when setting up the system
-    const ownerType = await this.createConcept(new Concept('Owner', 'Represents an owner of concepts', 'type-type-id'));
-    this.ownerTypeId = ownerType;
+    if (this.ownerTypeId != '')
+      return;
+    const existingOwnerType = await this.findConceptByName('Owner');
+    if (existingOwnerType) {
+      this.ownerTypeId = existingOwnerType.id;
+    } else {
+      const ownerType = new Concept('Owner', 'Represents an owner of concepts', 'type-type-id');
+      this.ownerTypeId = await this.createConcept(ownerType);
+    }
+    console.log(`Owner type ID set to: ${this.ownerTypeId}`);
   }
 
   async createOwner(ownerName: string): Promise<string> {
+    await this.initialize();
     const owner = new Concept(ownerName, "An owner of concepts", this.ownerTypeId);
     await this.storage.store(owner.id, owner.toJSON());
     return owner.id;
   }
-
+  
   async registerOwner(ownerName: string, peerId: string): Promise<string> {
+    await this.initialize();
     const owner = new Concept(ownerName, "An owner of concepts", this.ownerTypeId);
-    owner.id = peerId; // Use the Peer ID as the owner's ID
-    owner.setProperty('peerId', peerId); // Store the Peer ID as a property
+    owner.id = peerId;
+    owner.setProperty('peerId', peerId);
     await this.storage.store(owner.id, owner.toJSON());
     return owner.id;
   }
@@ -49,15 +58,16 @@ class ConceptManager {
     await this.storage.update(id, concept.toJSON());
   }
 
-  isOwner(concept: Concept): boolean {
+  async isOwner(concept: Concept): Promise<boolean> {
+    await this.initialize();
     return concept.typeId === this.ownerTypeId;
   }
-
+  
   async getOwners(concept: Concept): Promise<Alignment[]> {
     const ownerAlignments = [];
     for (const alignment of concept.alignedConcepts) {
       const alignedConcept = await this.getConcept(alignment.conceptId);
-      if (alignedConcept && this.isOwner(alignedConcept)) {
+      if (alignedConcept && await this.isOwner(alignedConcept)) {
         ownerAlignments.push(alignment);
       }
     }
