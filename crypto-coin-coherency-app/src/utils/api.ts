@@ -21,6 +21,7 @@ async function apiCall<T>(endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DE
 export const api = {
   getConcepts: () => apiCall<Concept[]>('/concepts'),
   getConcept: (guid: string) => apiCall<Concept>(`/concept/${guid}`),
+  updateConcept: (concept: Concept) => apiCall<Concept>(`/concept/${concept.ID}`, 'PUT', concept),
   addConcept: (concept: Omit<Concept, 'ID' | 'Timestamp'>) => apiCall<{ guid: string; cid: string }>('/concept', 'POST', concept),
   deleteConcept: (guid: string) => apiCall(`/concept/${guid}`, 'DELETE'),
 
