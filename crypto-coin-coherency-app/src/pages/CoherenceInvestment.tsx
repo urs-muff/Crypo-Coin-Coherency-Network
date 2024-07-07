@@ -3,17 +3,17 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { api } from '../utils/api';
 import { useConceptIds } from '../hooks/useConceptIds';
-import { Seed, Investment, SynergyNode, Concept } from '../types/api';
+import { Seed, ConceptInvestment, SeedInvestment, SynergyNode, Concept, Catalyst } from '../types/api';
 
 const Investments: React.FC = () => {
   const queryClient = useQueryClient();
   const conceptIds = useConceptIds();
-  const [newInvestment, setNewInvestment] = useState<Omit<Investment, 'SeedID' | 'Timestamp' | 'ConceptID'>>({
+  const [targetType, setTargetType] = useState<'concept' | 'synergyNode'>('concept');
+  const [newInvestment, setNewInvestment] = useState<Omit<ConceptInvestment | SeedInvestment, 'SeedID' | 'Timestamp' | 'ConceptID'>>({
     Name: '',
     Description: '',
     InvestorID: '',
     TargetID: '',
-    TargetType: 'concept',
     Amount: 0,
   });
 
@@ -21,25 +21,31 @@ const Investments: React.FC = () => {
   const { data: concepts } = useQuery<Concept[]>('concepts', api.getConcepts);
 
   const investments = useMemo(() => 
-    seeds?.filter(seed => seed.ConceptID === conceptIds.INVESTMENT) as Investment[] || []
-  , [seeds, conceptIds.INVESTMENT]);
+    seeds?.filter(seed => 
+      seed.ConceptID === conceptIds.CONCEPT_INVESTMENT ||
+      seed.ConceptID === conceptIds.SEED_INVESTMENT
+    ) as (ConceptInvestment | SeedInvestment)[] || []
+  , [seeds, conceptIds.CONCEPT_INVESTMENT, conceptIds.SEED_INVESTMENT]);
 
-  const synergyNodes = useMemo(() => 
-    seeds?.filter(seed => seed.ConceptID === conceptIds.SYNERGY_NODE) as SynergyNode[] || []
-  , [seeds, conceptIds.SYNERGY_NODE]);
+  const seedTargets = useMemo(() => 
+    seeds?.filter(seed => 
+      seed.ConceptID === conceptIds.SYNERGY_NODE ||
+      seed.ConceptID === conceptIds.CATALYST
+    ) as (SynergyNode | Catalyst)[] || []
+  , [seeds, conceptIds.SYNERGY_NODE, conceptIds.CATALYST]);
 
   const addInvestmentMutation = useMutation(
-    (data: { investment: Omit<Investment, 'SeedID' | 'Timestamp' | 'ConceptID'>, conceptId: string }) => 
-      api.addInvestment(data.investment, data.conceptId),
+    (data: Omit<ConceptInvestment, 'SeedID' | 'Timestamp'> | Omit<SeedInvestment, 'SeedID' | 'Timestamp'>) => 
+      api.addSeed(data),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('seeds');
+        setTargetType('concept');
         setNewInvestment({
           Name: '',
           Description: '',
           InvestorID: '',
           TargetID: '',
-          TargetType: 'concept',
           Amount: 0,
         });
       },
@@ -48,16 +54,27 @@ const Investments: React.FC = () => {
 
   const handleAddInvestment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (conceptIds.INVESTMENT) {
-      const investmentData: Omit<Investment, 'SeedID' | 'Timestamp' | 'ConceptID'> = {
+    if (conceptIds.CONCEPT_INVESTMENT && targetType === 'concept') {
+      const investmentData: Omit<ConceptInvestment, 'SeedID' | 'Timestamp'> = {
         Name: `Investment from ${newInvestment.InvestorID} to ${newInvestment.TargetID}`,
-        Description: `${newInvestment.Amount} Energy Tokens invested in ${newInvestment.TargetType}`,
+        Description: `${newInvestment.Amount} Energy Tokens invested`,
         InvestorID: newInvestment.InvestorID,
         TargetID: newInvestment.TargetID,
-        TargetType: newInvestment.TargetType,
-        Amount: newInvestment.Amount
+        Amount: newInvestment.Amount,
+        ConceptID: conceptIds.CONCEPT_INVESTMENT,
       };
-      addInvestmentMutation.mutate({ investment: investmentData, conceptId: conceptIds.INVESTMENT });
+      addInvestmentMutation.mutate(investmentData);
+    }
+    if (conceptIds.SEED_INVESTMENT && targetType !== 'concept') {
+      const investmentData: Omit<SeedInvestment, 'SeedID' | 'Timestamp'> = {
+        Name: `Investment from ${newInvestment.InvestorID} to ${newInvestment.TargetID}`,
+        Description: `${newInvestment.Amount} Energy Tokens invested`,
+        InvestorID: newInvestment.InvestorID,
+        TargetID: newInvestment.TargetID,
+        Amount: newInvestment.Amount,
+        ConceptID: conceptIds.SEED_INVESTMENT,
+      };
+      addInvestmentMutation.mutate(investmentData);
     }
   };
 
@@ -70,11 +87,11 @@ const Investments: React.FC = () => {
         <ul className="space-y-2">
           {investments.map(investment => (
             <li key={investment.SeedID} className="border p-2 rounded">
-              <strong>Investor:</strong> {synergyNodes.find(node => node.SeedID === investment.InvestorID)?.Name || 'Unknown'} |{' '}
-              <strong>Target:</strong> {investment.TargetType === 'concept' 
+              <strong>Investor:</strong> {seedTargets.find(node => node.SeedID === investment.InvestorID)?.Name || 'Unknown'} |{' '}
+              <strong>Target:</strong> {investment.ConceptID === conceptIds.CONCEPT_INVESTMENT 
                 ? concepts?.find(c => c.ID === investment.TargetID)?.Name 
-                : synergyNodes.find(node => node.SeedID === investment.TargetID)?.Name
-              } ({investment.TargetType}) |{' '}
+                : seedTargets.find(node => node.SeedID === investment.TargetID)?.Name
+              } ({investment.ConceptID === conceptIds.CONCEPT_INVESTMENT ? 'concept' : 'seed'}) |{' '}
               <strong>Amount:</strong> {investment.Amount} Energy Tokens
             </li>
           ))}
@@ -92,7 +109,7 @@ const Investments: React.FC = () => {
               className="w-full p-2 border rounded"
             >
               <option value="">Select Investor</option>
-              {synergyNodes.map(node => (
+              {seedTargets.map(node => (
                 <option key={node.SeedID} value={node.SeedID}>{node.Name}</option>
               ))}
             </select>
@@ -101,8 +118,11 @@ const Investments: React.FC = () => {
           <div>
             <label className="block mb-1">Target Type</label>
             <select 
-              value={newInvestment.TargetType}
-              onChange={e => setNewInvestment({...newInvestment, TargetType: e.target.value as 'concept' | 'synergyNode', TargetID: ''})}
+              value={targetType}
+              onChange={e => {
+                setTargetType(e.target.value as 'concept' | 'synergyNode');
+                setNewInvestment({...newInvestment, TargetID: ''})}
+              }
               className="w-full p-2 border rounded"
             >
               <option value="concept">Concept</option>
@@ -118,12 +138,12 @@ const Investments: React.FC = () => {
               className="w-full p-2 border rounded"
             >
               <option value="">Select Target</option>
-              {newInvestment.TargetType === 'concept' 
+              {targetType === 'concept' 
                 ? concepts?.map(concept => (
                     <option key={concept.ID} value={concept.ID}>{concept.Name}</option>
                   ))
-                : synergyNodes
-                    .filter(node => node.SeedID !== newInvestment.InvestorID)
+                : seedTargets
+                    .filter(node => node.ConceptID === conceptIds.CATALYST)
                     .map(node => (
                       <option key={node.SeedID} value={node.SeedID}>{node.Name}</option>
                     ))
@@ -144,7 +164,7 @@ const Investments: React.FC = () => {
           <button 
             type="submit" 
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            disabled={!newInvestment.InvestorID || !newInvestment.TargetID || newInvestment.Amount <= 0 || !conceptIds.INVESTMENT}
+            disabled={!newInvestment.InvestorID || !newInvestment.TargetID || newInvestment.Amount <= 0 || !conceptIds.CONCEPT_INVESTMENT || !conceptIds.SEED_INVESTMENT}
           >
             Create Investment
           </button>

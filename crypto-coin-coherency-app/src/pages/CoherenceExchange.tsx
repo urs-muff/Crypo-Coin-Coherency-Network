@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { api } from '../utils/api';
 import { useConceptIds } from '../hooks/useConceptIds';
-import { Seed, EnergyToken, Catalyst, SynergyNode, FlowEvent, HarmonyAgreement, Investment } from '../types/api';
+import { Seed, EnergyToken, Catalyst, SynergyNode, FlowEvent, HarmonyAgreement, ConceptInvestment, SeedInvestment } from '../types/api';
 
 const CoherenceExchange: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'tokens' | 'catalysts' | 'nodes' | 'flows' | 'agreements' | 'investments'>('tokens');
@@ -31,9 +31,13 @@ const CoherenceExchange: React.FC = () => {
     seeds?.filter(seed => seed.ConceptID === conceptIds.HARMONY_AGREEMENT) as HarmonyAgreement[] || []
   , [seeds, conceptIds.HARMONY_AGREEMENT]);
 
-  const investments = useMemo(() => 
-    seeds?.filter(seed => seed.ConceptID === conceptIds.INVESTMENT) as Investment[] || []
-  , [seeds, conceptIds.INVESTMENT]);
+  const conceptInvestments = useMemo(() => 
+    seeds?.filter(seed => seed.ConceptID === conceptIds.CONCEPT_INVESTMENT) as ConceptInvestment[] || []
+  , [seeds, conceptIds.CONCEPT_INVESTMENT]);
+
+  const seedInvestments = useMemo(() => 
+    seeds?.filter(seed => seed.ConceptID === conceptIds.SEED_INVESTMENT) as SeedInvestment[] || []
+  , [seeds, conceptIds.SEED_INVESTMENT]);
 
   return (
     <div className="p-4">
@@ -118,9 +122,14 @@ const CoherenceExchange: React.FC = () => {
         )}
         {activeTab === 'investments' && (
           <ul>
-            {investments.map(investment => (
+            {conceptInvestments.map(investment => (
               <li key={investment.SeedID}>
-                Investor: {investment.InvestorID} | Target: {investment.TargetID} ({investment.TargetType}) | Amount: {investment.Amount}
+                Investor: {investment.InvestorID} | Target: {investment.TargetID} | Amount: {investment.Amount}
+              </li>
+            ))}
+            {seedInvestments.map(investment => (
+              <li key={investment.SeedID}>
+                Investor: {investment.InvestorID} | Target: {investment.TargetID} | Amount: {investment.Amount}
               </li>
             ))}
           </ul>

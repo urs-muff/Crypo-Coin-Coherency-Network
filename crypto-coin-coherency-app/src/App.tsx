@@ -6,7 +6,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import ConceptExplorer from './pages/ConceptExplorer';
 import CoherenceExchange from './pages/CoherenceExchange';
-import { IndividualNexus } from './pages/IndividualNexus';
+import Nexus from './pages/Nexus';
 import { CollectiveWisdom } from './pages/CollectiveWisdom';
 import RelationshipVisualizer from './pages/RelationshipVisualizer';
 import CoherenceInvestment from './pages/CoherenceInvestment';
@@ -23,7 +23,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/concepts" element={<ConceptExplorer />} />
             <Route path="/exchange" element={<CoherenceExchange />} />
-            <Route path="/nexus" element={<IndividualNexus />} />
+            <Route path="/nexus" element={<Nexus />} />
             <Route path="/wisdom" element={<CollectiveWisdom />} />
             <Route path="/relationships" element={<RelationshipVisualizer />} />
             <Route path="/investments" element={<CoherenceInvestment />} />

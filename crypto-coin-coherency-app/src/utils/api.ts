@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 
-import { Concept, Seed, Relationship, Investment } from '../types/api';
+import { Concept, Seed, Relationship, SynergyNode, Catalyst } from '../types/api';
 
 const API_BASE_URL = 'http://localhost:9090';
 
@@ -19,11 +19,12 @@ async function apiCall<T>(endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DE
 }
 
 export const api = {
-  getConcepts: () => apiCall<Concept[]>('/concepts'),
-  getConcept: (guid: string) => apiCall<Concept>(`/concept/${guid}`),
-  updateConcept: (concept: Concept) => apiCall<Concept>(`/concept/${concept.ID}`, 'PUT', concept),
-  addConcept: (concept: Omit<Concept, 'ID' | 'Timestamp'>) => apiCall<{ guid: string; cid: string }>('/concept', 'POST', concept),
-  deleteConcept: (guid: string) => apiCall(`/concept/${guid}`, 'DELETE'),
+  getConcepts:    ()                  => apiCall<Concept[]>('/concepts'),
+  getConcept:     (guid: string)      => apiCall<Concept>(`/concept/${guid}`),
+  getConceptName: (conceptId: string) => apiCall<{ name: string }>(`/concept/${conceptId}/name`),
+  updateConcept:  (concept: Concept)  => apiCall<Concept>(`/concept/${concept.ID}`, 'PUT', concept),
+  addConcept:     (concept: Omit<Concept, 'ID' | 'Timestamp'>) => apiCall<{ guid: string; cid: string }>('/concept', 'POST', concept),
+  deleteConcept:  (guid: string)      => apiCall(`/concept/${guid}`, 'DELETE'),
 
   getRelationships: () => apiCall<Relationship[]>('/relationships'),
   getRelationship: (id: string) => apiCall<Relationship>(`/relationship/${id}`),
@@ -35,9 +36,17 @@ export const api = {
   addSeed: <T extends Seed>(seed: Omit<T, 'SeedID' | 'Timestamp'>) => apiCall<{ guid: string; cid: string }>('/seed', 'POST', seed),
   deleteSeed: (guid: string) => apiCall(`/seed/${guid}`, 'DELETE'),
 
-  addInvestment: (investment: Omit<Investment, 'SeedID' | 'Timestamp' | 'ConceptID'>, conceptId: string) => {
-    console.log(`addInvestment: ${JSON.stringify(investment)}, conceptId=${conceptId}`);
-    return api.addSeed<Investment>({
-      ...investment,
-      ConceptID: conceptId})},
+  getSteward: () => apiCall<SynergyNode>('/steward'),
+  updateSteward: (steward: Partial<SynergyNode>) => apiCall<SynergyNode>('/steward', 'PUT', steward),
+
+  addSeedWithConcept: <T extends Seed>(seed: T, conceptId: string) =>
+    api.addSeed<T>({
+      ...seed,
+      ConceptID: conceptId}),
+
+  addCatalyst: (catalyst: Omit<Catalyst, 'SeedID' | 'Timestamp'>) => 
+    apiCall<{ guid: string; cid: string }>('/seed', 'POST', catalyst),
+  updateCatalyst: (catalyst: Partial<Catalyst>) => 
+    apiCall<Catalyst>(`/seed/${catalyst.SeedID}`, 'PUT', catalyst),
+  deleteCatalyst: (seedId: string) => apiCall(`/seed/${seedId}`, 'DELETE'),
 };

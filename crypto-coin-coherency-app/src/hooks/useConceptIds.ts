@@ -27,8 +27,11 @@ export const useConceptIds = () => {
           case 'Smart Contract':
             ids.HARMONY_AGREEMENT = concept.ID;
             break;
-          case 'Investment':
-            ids.INVESTMENT = concept.ID;
+          case 'Concept Investment':
+            ids.CONCEPT_INVESTMENT = concept.ID;
+            break;
+          case 'Seed Investment':
+            ids.SEED_INVESTMENT = concept.ID;
             break;
         }
       });
