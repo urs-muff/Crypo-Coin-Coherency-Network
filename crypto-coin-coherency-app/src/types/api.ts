@@ -29,3 +29,34 @@ export interface Seed {
   Description: string;
   Timestamp: string;
 }
+
+export interface EnergyToken extends Seed {
+  Value: number;
+}
+
+export interface Catalyst extends Seed {
+  Steward: string;
+}
+
+export interface SynergyNode extends Seed {
+  EnergyBalance: number;
+}
+
+export interface FlowEvent extends Seed {
+  From: string;
+  To: string;
+  Amount: number;
+}
+
+export interface HarmonyAgreement extends Seed {
+  Parties: string[];
+  Terms: string;
+  Status: 'active' | 'completed' | 'terminated';
+}
+
+export interface Investment extends Seed {
+  InvestorID: string;
+  TargetID: string;
+  TargetType: 'concept' | 'synergyNode';
+  Amount: number;
+}

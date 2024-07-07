@@ -14,9 +14,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <ul className="flex space-x-4">
             <li><Link to="/" className="hover:text-blue-200">Home</Link></li>
             <li><Link to="/concepts" className="hover:text-blue-200">Concepts</Link></li>
-            <li><Link to="/marketplace" className="hover:text-blue-200">Marketplace</Link></li>
-            <li><Link to="/profile" className="hover:text-blue-200">Profile</Link></li>
-            <li><Link to="/governance" className="hover:text-blue-200">Governance</Link></li>
+            <li><Link to="/exchange" className="hover:text-blue-200">Coherence Exchange</Link></li>
+            <li><Link to="/nexus" className="hover:text-blue-200">Individual Nexus</Link></li>
+            <li><Link to="/wisdom" className="hover:text-blue-200">Collective Wisdom</Link></li>
             <li><Link to="/relationships" className="hover:text-blue-200">Relationships</Link></li>
             <li><Link to="/investments" className="hover:text-blue-200">Investments</Link></li>
             <li><Link to="/community" className="hover:text-blue-200">Community</Link></li>
