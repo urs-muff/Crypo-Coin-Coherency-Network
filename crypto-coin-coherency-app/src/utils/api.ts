@@ -34,6 +34,7 @@ export const api = {
   getSeeds: () => apiCall<Seed[]>('/seeds'),
   getSeed: (guid: string) => apiCall<Seed>(`/seed/${guid}`),
   addSeed: <T extends Seed>(seed: Omit<T, 'SeedID' | 'Timestamp'>) => apiCall<{ guid: string; cid: string }>('/seed', 'POST', seed),
+  updateSeed: <T extends Partial<Seed>>(seed: T) => apiCall<T>(`/seed/${seed.SeedID}`, 'PUT', seed),
   deleteSeed: (guid: string) => apiCall(`/seed/${guid}`, 'DELETE'),
 
   getSteward: () => apiCall<SynergyNode>('/steward'),

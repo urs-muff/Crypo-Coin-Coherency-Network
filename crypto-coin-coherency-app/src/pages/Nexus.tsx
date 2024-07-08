@@ -4,14 +4,16 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { api } from '../utils/api';
 import { useConceptIds } from '../hooks/useConceptIds';
 import { useCurrentSteward } from '../hooks/useCurrentSteward';
-import { Seed, ConceptInvestment, Catalyst, SynergyNode } from '../types/api';
+import { Seed, ConceptInvestment, Catalyst, SynergyNode, SeedInvestment, Concept } from '../types/api';
 import CatalystComponent from '../components/Catalyst';
+import InvestmentComponent from '../components/Investment';
 
 const Nexus: React.FC = () => {
   const queryClient = useQueryClient();
   const conceptIds = useConceptIds();
   const { data: currentSteward, isLoading: isStewardLoading } = useCurrentSteward();
   const { data: seeds } = useQuery<Seed[]>('seeds', api.getSeeds);
+  const { data: concepts } = useQuery<Concept[]>('concepts', api.getConcepts);
   const [isEditing, setIsEditing] = useState(false);
   const [editedSteward, setEditedSteward] = useState<SynergyNode | null>(null);
   const [newCatalyst, setNewCatalyst] = useState<Partial<Catalyst>>({
@@ -28,12 +30,14 @@ const Nexus: React.FC = () => {
     ) as Catalyst[] || []
   , [seeds, conceptIds.CATALYST, currentSteward]);
 
-  const stewardConceptInvestments = useMemo(() => 
+  const stewardAllInvestments = useMemo(() => 
     seeds?.filter(seed => 
-      seed.ConceptID === conceptIds.CONCEPT_INVESTMENT && 
-      (seed as ConceptInvestment).InvestorID === currentSteward?.SeedID
-    ) as ConceptInvestment[] || []
-  , [seeds, conceptIds.CONCEPT_INVESTMENT, currentSteward]);
+      (seed.ConceptID === conceptIds.CONCEPT_INVESTMENT && 
+      (seed as ConceptInvestment).InvestorID === currentSteward?.SeedID) ||
+      (seed.ConceptID === conceptIds.SEED_INVESTMENT && 
+      (seed as SeedInvestment).InvestorID === currentSteward?.SeedID)
+    ) as (ConceptInvestment | SeedInvestment)[] || []
+  , [seeds, conceptIds.CONCEPT_INVESTMENT, conceptIds.SEED_INVESTMENT, currentSteward]);
 
   const updateStewardMutation = useMutation(api.updateSteward, {
     onSuccess: () => {
@@ -175,10 +179,10 @@ const Nexus: React.FC = () => {
       <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-2">Investments</h2>
         <ul className="list-disc pl-5">
-          {stewardConceptInvestments.map(conceptInvestment => (
-            <li key={conceptInvestment.SeedID}>
-              {conceptInvestment.Amount} Energy Tokens invested in ({conceptInvestment.TargetID})
-              {/* We need to implement a way to resolve TargetID to its name */}
+          {stewardAllInvestments.map(investment => (
+            <li key={investment.SeedID}>
+              <InvestmentComponent key={investment.SeedID} investment={investment}
+                seeds={seeds || []} concepts={concepts || []} />
             </li>
           ))}
         </ul>

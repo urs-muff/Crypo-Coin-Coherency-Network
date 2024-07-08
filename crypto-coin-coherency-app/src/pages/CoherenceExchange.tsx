@@ -3,13 +3,15 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { api } from '../utils/api';
 import { useConceptIds } from '../hooks/useConceptIds';
-import { Seed, EnergyToken, Catalyst, SynergyNode, FlowEvent, HarmonyAgreement, ConceptInvestment, SeedInvestment } from '../types/api';
+import { Seed, Concept, EnergyToken, Catalyst, SynergyNode, FlowEvent, HarmonyAgreement, ConceptInvestment, SeedInvestment } from '../types/api';
+import InvestmentComponent from '../components/Investment';
 
 const CoherenceExchange: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'tokens' | 'catalysts' | 'nodes' | 'flows' | 'agreements' | 'investments'>('tokens');
   const conceptIds = useConceptIds();
 
   const { data: seeds } = useQuery<Seed[]>('seeds', api.getSeeds);
+  const { data: concepts } = useQuery<Concept[]>('concepts', api.getConcepts);
 
   const energyTokens = useMemo(() => 
     seeds?.filter(seed => seed.ConceptID === conceptIds.ENERGY_TOKEN) as EnergyToken[] || []
@@ -31,13 +33,12 @@ const CoherenceExchange: React.FC = () => {
     seeds?.filter(seed => seed.ConceptID === conceptIds.HARMONY_AGREEMENT) as HarmonyAgreement[] || []
   , [seeds, conceptIds.HARMONY_AGREEMENT]);
 
-  const conceptInvestments = useMemo(() => 
-    seeds?.filter(seed => seed.ConceptID === conceptIds.CONCEPT_INVESTMENT) as ConceptInvestment[] || []
-  , [seeds, conceptIds.CONCEPT_INVESTMENT]);
-
-  const seedInvestments = useMemo(() => 
-    seeds?.filter(seed => seed.ConceptID === conceptIds.SEED_INVESTMENT) as SeedInvestment[] || []
-  , [seeds, conceptIds.SEED_INVESTMENT]);
+  const allInvestments = useMemo(() => 
+    seeds?.filter(seed => 
+      seed.ConceptID === conceptIds.CONCEPT_INVESTMENT ||
+      seed.ConceptID === conceptIds.SEED_INVESTMENT
+    ) as (ConceptInvestment | SeedInvestment)[] || []
+  , [seeds, conceptIds.CONCEPT_INVESTMENT, conceptIds.SEED_INVESTMENT]);
 
   return (
     <div className="p-4">
@@ -122,15 +123,9 @@ const CoherenceExchange: React.FC = () => {
         )}
         {activeTab === 'investments' && (
           <ul>
-            {conceptInvestments.map(investment => (
-              <li key={investment.SeedID}>
-                Investor: {investment.InvestorID} | Target: {investment.TargetID} | Amount: {investment.Amount}
-              </li>
-            ))}
-            {seedInvestments.map(investment => (
-              <li key={investment.SeedID}>
-                Investor: {investment.InvestorID} | Target: {investment.TargetID} | Amount: {investment.Amount}
-              </li>
+            {allInvestments.map(investment => (
+              <InvestmentComponent key={investment.SeedID} investment={investment}
+                seeds={seeds || []} concepts={concepts || []} />
             ))}
           </ul>
         )}

@@ -69,3 +69,19 @@ export interface SeedInvestment extends Seed {
   TargetID: string;
   Amount: number;
 }
+
+export interface ProposalAction extends Seed {
+  TargetID: string;
+  ActionType: string; // e.g., 'UPDATE', 'CREATE', 'DELETE'
+  ActionData: Record<string, any>;
+}
+
+export interface Proposal extends Seed {
+  StewardID: string;
+  ActionSeedID: string;
+  VotesFor: number;
+  VotesAgainst: number;
+  Status: 'active' | 'passed' | 'rejected' | 'implemented';
+}
+
+export interface HarmonyGuideline extends Seed {}

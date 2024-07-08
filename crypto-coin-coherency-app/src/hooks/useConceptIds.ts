@@ -12,27 +12,16 @@ export const useConceptIds = () => {
       const ids: Record<string, string> = {};
       concepts.forEach(concept => {
         switch (concept.Name) {
-          case 'Coin':
-            ids.ENERGY_TOKEN = concept.ID;
-            break;
-          case 'Asset':
-            ids.CATALYST = concept.ID;
-            break;
-          case 'Steward':
-            ids.SYNERGY_NODE = concept.ID;
-            break;
-          case 'Transaction':
-            ids.FLOW_EVENT = concept.ID;
-            break;
-          case 'Smart Contract':
-            ids.HARMONY_AGREEMENT = concept.ID;
-            break;
-          case 'Concept Investment':
-            ids.CONCEPT_INVESTMENT = concept.ID;
-            break;
-          case 'Seed Investment':
-            ids.SEED_INVESTMENT = concept.ID;
-            break;
+          case 'Coin':                ids.ENERGY_TOKEN        = concept.ID; break;
+          case 'Asset':               ids.CATALYST            = concept.ID; break;
+          case 'Steward':             ids.SYNERGY_NODE        = concept.ID; break;
+          case 'Transaction':         ids.FLOW_EVENT          = concept.ID; break;
+          case 'Smart Contract':      ids.HARMONY_AGREEMENT   = concept.ID; break;
+          case 'Concept Investment':  ids.CONCEPT_INVESTMENT  = concept.ID; break;
+          case 'Seed Investment':     ids.SEED_INVESTMENT     = concept.ID; break;
+          case 'Harmony Guideline':   ids.HARMONY_GUIDELINE   = concept.ID; break;
+          case 'Proposal':            ids.PROPOSAL            = concept.ID; break;
+          case 'Proposal Action':     ids.PROPOSAL_ACTION     = concept.ID; break;
         }
       });
       // console.log(`Concept IDs: ${JSON.stringify(ids)}`);

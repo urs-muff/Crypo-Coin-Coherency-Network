@@ -7,7 +7,7 @@ import Home from './pages/Home';
 import ConceptExplorer from './pages/ConceptExplorer';
 import CoherenceExchange from './pages/CoherenceExchange';
 import Nexus from './pages/Nexus';
-import { CollectiveWisdom } from './pages/CollectiveWisdom';
+import CollectiveWisdom from './pages/Wisdom';
 import RelationshipVisualizer from './pages/RelationshipVisualizer';
 import CoherenceInvestment from './pages/CoherenceInvestment';
 import { CommunityHub } from './pages/CommunityHub';
