@@ -1,4 +1,4 @@
-# Concept System (CC004)
+# Coherence Web (CC004)
 
 ## Summary
 The concept system is a core feature of the network, allowing for the creation, ownership, and monetization of ideas and content.

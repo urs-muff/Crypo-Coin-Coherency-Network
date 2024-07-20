@@ -1,4 +1,4 @@
-# Member Interactions (CC007)
+# Synergy Node Interactions (CC007)
 
 ## Summary
 Members of the network have specific rights and capabilities for interacting with the system and other users.

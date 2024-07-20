@@ -1,4 +1,4 @@
-# One Coin (CC001)
+# Energy Token (CC001)
 
 ## Summary
 One Coin is the primary currency of the Crypto Coin Coherency Network, designed to facilitate transactions, value representation, and coherence rewards across the system.

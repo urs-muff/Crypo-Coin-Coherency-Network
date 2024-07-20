@@ -1,4 +1,4 @@
-# Marketplace (CC006)
+# Coherence Exchange (CC006)
 
 ## Summary
 The marketplace serves as a platform for exchanging concepts, content, and services within the network.

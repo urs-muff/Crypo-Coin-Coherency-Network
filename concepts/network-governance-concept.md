@@ -1,4 +1,4 @@
-# Network Governance
+# Collective Wisdom Governance (CC008)
 
 ## Summary
 The network incorporates a governance system to maintain integrity, approve changes, and manage the overall ecosystem.

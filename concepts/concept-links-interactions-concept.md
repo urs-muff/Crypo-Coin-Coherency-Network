@@ -1,4 +1,4 @@
-# Concept Links and Interactions (CC005)
+# Synergy Links and Interactions (CC005)
 
 ## Summary
 Concept links create connections between different ideas and content pieces, forming a web of interrelated information and interactions.

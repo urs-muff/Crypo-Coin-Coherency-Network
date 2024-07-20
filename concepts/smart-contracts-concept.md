@@ -1,4 +1,4 @@
-# Smart Contracts (CC002)
+# Harmony Agreements (CC002)
 
 ## Summary
 Smart contracts in this network act as transaction restrictors and executors, ensuring that all parties adhere to agreed-upon terms.

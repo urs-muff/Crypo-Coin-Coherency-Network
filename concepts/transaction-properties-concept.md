@@ -1,4 +1,4 @@
-# Transaction Properties (CC003)
+# Flow Event Properties (CC003)
 
 ## Summary
 Transactions within the network have specific properties that define their nature, participants, and value distribution.
