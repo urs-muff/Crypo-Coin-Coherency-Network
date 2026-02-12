@@ -1,5 +1,9 @@
 # Agent Autonomy Architecture
 
+> **Cost optimization:** See [MODEL-ROUTING.md](MODEL-ROUTING.md) for which
+> models run where. ~85% of agent work runs on local hardware (free).
+> Cloud subscriptions handle orchestration + rare premium tasks.
+
 ## The Shift: From Human-in-the-Loop to Human-on-the-Loop
 
 The previous plan had humans at 5 of 6 steps. This plan pushes AI to handle
